@@ -653,14 +653,18 @@ export default function AdminPage() {
                                     >
                                         {/* Detail View */}
                                         <GlassCard className="p-0 overflow-hidden">
-                                            <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                                                <button onClick={() => setSelectedSubmissionId(null)} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-                                                    <ArrowLeft className="w-4 h-4" /> Back to List
+                                            <div className="p-6 border-b border-white/10 flex flex-wrap items-center justify-between gap-4">
+                                                <button
+                                                    onClick={() => setSelectedSubmissionId(null)}
+                                                    className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors border border-white/10 shrink-0"
+                                                    title="Back to List"
+                                                >
+                                                    <ArrowLeft className="w-5 h-5" />
                                                 </button>
-                                                <div className="flex items-center gap-2">
-                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'New')} className={`px-3 py-1 rounded-full text-xs font-medium border ${selectedSubmission?.status === 'New' ? 'bg-blue-500 text-white' : 'border-white/10 text-gray-400'}`}>New</button>
-                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'Contacted')} className={`px-3 py-1 rounded-full text-xs font-medium border ${selectedSubmission?.status === 'Contacted' ? 'bg-yellow-500 text-black' : 'border-white/10 text-gray-400'}`}>Contacted</button>
-                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'Completed')} className={`px-3 py-1 rounded-full text-xs font-medium border ${selectedSubmission?.status === 'Completed' ? 'bg-green-500 text-white' : 'border-white/10 text-gray-400'}`}>Completed</button>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'New')} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedSubmission?.status === 'New' ? 'bg-blue-500 text-white border-blue-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>New</button>
+                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'Contacted')} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedSubmission?.status === 'Contacted' ? 'bg-yellow-500 text-black border-yellow-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>Contacted</button>
+                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'Completed')} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedSubmission?.status === 'Completed' ? 'bg-green-500 text-white border-green-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>Completed</button>
                                                 </div>
                                             </div>
 
@@ -762,17 +766,17 @@ export default function AdminPage() {
                                                     className="pl-10 bg-black/40 border-white/10"
                                                 />
                                             </div>
-                                            <div className="flex gap-2">
-                                                <PillButton onClick={() => fetchData()} size="sm" className="bg-white/10 border-white/10 hover:bg-white/20">
+                                            <div className="flex flex-wrap gap-2 justify-center md:justify-end">
+                                                <PillButton onClick={() => fetchData()} size="sm" className="w-10 h-10 p-0 bg-white/10 border-white/10 hover:bg-white/20 shrink-0">
                                                     <RefreshCw className="w-4 h-4" />
                                                 </PillButton>
                                                 {['All', 'New', 'Contacted', 'Completed'].map(status => (
                                                     <button
                                                         key={status}
                                                         onClick={() => setStatusFilter(status as "All" | "New" | "Contacted" | "Completed")}
-                                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === status
-                                                            ? 'bg-blue-600 text-white'
-                                                            : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${statusFilter === status
+                                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                                            : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5'
                                                             }`}
                                                     >
                                                         {status}
