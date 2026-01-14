@@ -89,3 +89,13 @@ body {
   color: #ffffff;
   font-weight: 500;
 }
+
+/* Scrollbar Hide Utility - Using standard CSS to avoid build issues with pseudo-elements in @utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

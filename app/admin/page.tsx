@@ -653,7 +653,7 @@ export default function AdminPage() {
                                     >
                                         {/* Detail View */}
                                         <GlassCard className="p-0 overflow-hidden">
-                                            <div className="p-6 border-b border-white/10 flex flex-wrap items-center justify-between gap-4">
+                                            <div className="p-4 md:p-6 border-b border-white/10 flex items-center justify-between gap-4 overflow-x-auto scrollbar-hide">
                                                 <button
                                                     onClick={() => setSelectedSubmissionId(null)}
                                                     className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors border border-white/10 shrink-0"
@@ -661,10 +661,10 @@ export default function AdminPage() {
                                                 >
                                                     <ArrowLeft className="w-5 h-5" />
                                                 </button>
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'New')} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedSubmission?.status === 'New' ? 'bg-blue-500 text-white border-blue-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>New</button>
-                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'Contacted')} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedSubmission?.status === 'Contacted' ? 'bg-yellow-500 text-black border-yellow-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>Contacted</button>
-                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'Completed')} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedSubmission?.status === 'Completed' ? 'bg-green-500 text-white border-green-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>Completed</button>
+                                                <div className="flex items-center gap-2 shrink-0 pr-4 md:pr-0">
+                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'New')} className={`px-4 py-2 md:px-3 md:py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap ${selectedSubmission?.status === 'New' ? 'bg-blue-500 text-white border-blue-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>New</button>
+                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'Contacted')} className={`px-4 py-2 md:px-3 md:py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap ${selectedSubmission?.status === 'Contacted' ? 'bg-yellow-500 text-black border-yellow-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>Contacted</button>
+                                                    <button onClick={() => handleStatusUpdate(selectedSubmission!.id, 'Completed')} className={`px-4 py-2 md:px-3 md:py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap ${selectedSubmission?.status === 'Completed' ? 'bg-green-500 text-white border-green-500' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>Completed</button>
                                                 </div>
                                             </div>
 
@@ -691,31 +691,29 @@ export default function AdminPage() {
                                                             </div>
 
                                                             {/* Actions */}
-                                                            <div className="flex gap-4">
+                                                            <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2">
                                                                 {selectedSubmission.whatsapp && (
                                                                     <a
                                                                         href={`https://wa.me/${selectedSubmission.whatsapp.replace(/\D/g, '')}`}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="flex-1 bg-green-600 hover:bg-green-500 text-white h-12 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
+                                                                        className="flex-1 min-w-[160px] md:min-w-0 bg-green-600 hover:bg-green-500 text-white h-12 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors shrink-0 whitespace-nowrap px-4 text-sm md:text-base"
                                                                     >
-                                                                        <MessageCircle className="w-5 h-5" />
+                                                                        <MessageCircle className="w-5 h-5 shrink-0" />
                                                                         Chat on WhatsApp
                                                                     </a>
                                                                 )}
-                                                                {selectedFiles.length > 0 && (
-                                                                    <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="w-16 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 flex items-center justify-center transition-colors group" aria-label="Add more files"><span className="text-2xl text-white/40 group-hover:text-white/60 transition-colors">+</span></button>
-                                                                )}
                                                                 <a
                                                                     href={`mailto:${selectedSubmission.email}`}
-                                                                    className="flex-1 bg-white/10 hover:bg-white/20 text-white h-12 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border border-white/10"
+                                                                    className="flex-1 min-w-[150px] md:min-w-0 bg-white/10 hover:bg-white/20 text-white h-12 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border border-white/10 shrink-0 whitespace-nowrap px-4 text-sm md:text-base"
                                                                 >
-                                                                    <Mail className="w-5 h-5" />
+                                                                    <Mail className="w-5 h-5 shrink-0" />
                                                                     Reply via Email
                                                                 </a>
                                                                 <button
                                                                     onClick={() => handleDelete(selectedSubmission.id)}
-                                                                    className="w-12 h-12 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center border border-red-500/20"
+                                                                    className="w-12 h-12 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center border border-red-500/20 shrink-0 transition-colors"
+                                                                    title="Delete Request"
                                                                 >
                                                                     <Trash2 className="w-5 h-5" />
                                                                 </button>
@@ -766,7 +764,7 @@ export default function AdminPage() {
                                                     className="pl-10 bg-black/40 border-white/10"
                                                 />
                                             </div>
-                                            <div className="flex flex-wrap gap-2 justify-center md:justify-end">
+                                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide w-full md:w-auto md:justify-end pr-4 md:pr-0 pb-1 md:pb-0">
                                                 <PillButton onClick={() => fetchData()} size="sm" className="w-10 h-10 p-0 bg-white/10 border-white/10 hover:bg-white/20 shrink-0">
                                                     <RefreshCw className="w-4 h-4" />
                                                 </PillButton>
@@ -774,7 +772,7 @@ export default function AdminPage() {
                                                     <button
                                                         key={status}
                                                         onClick={() => setStatusFilter(status as "All" | "New" | "Contacted" | "Completed")}
-                                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${statusFilter === status
+                                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${statusFilter === status
                                                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                                                             : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5'
                                                             }`}
