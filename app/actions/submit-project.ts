@@ -1,36 +1,35 @@
 'use server'
 
-import dbConnect from "@/lib/db";
-import Request from "@/models/Request";
+import { supabase } from "@/utils/supabase/client";
 
-// Type definition to match frontend expectations
-export interface AdminSubmission {
+// Supabase Request Interface
+export interface RequestData {
     id: string;
-    businessName: string; // Mapped from businessName
-    name: string; // Mapped from businessName for compatibility if needed, or update frontend
-    email: string;
-    whatsapp: string;
-    serviceType: string; // Mapped from serviceType
-    projectType: string; // Mapped from serviceType for compatibility
+    created_at: string;
+    business_name: string;
+    service_type: string;
     budget: string;
+    whatsapp: string;
+    email: string;
     description: string;
     status: 'New' | 'Contacted' | 'Completed';
-    createdAt: string;
-    date: string; // Derived from createdAt
 }
 
 export async function submitProjectRequest(formData: any) {
     try {
-        await dbConnect();
-        // Ensure we save with the correct fields as per schema
-        await Request.create({
-            businessName: formData.name,
-            serviceType: formData.projectType, // Map 'projectType' -> 'serviceType'
-            budget: formData.budget,
-            whatsapp: formData.whatsapp,
-            email: formData.email,
-            description: formData.description,
-        });
+        const { error } = await supabase
+            .from('requests')
+            .insert({
+                business_name: formData.name,
+                service_type: formData.projectType,
+                budget: formData.budget,
+                whatsapp: formData.whatsapp,
+                email: formData.email,
+                description: formData.description,
+                status: 'New'
+            });
+
+        if (error) throw error;
         return { success: true };
     } catch (error) {
         console.error('Failed to save submission:', error);
@@ -40,25 +39,30 @@ export async function submitProjectRequest(formData: any) {
 
 export async function getSubmissionsAction() {
     try {
-        await dbConnect();
-        const docs = await Request.find({}).sort({ createdAt: -1 }).lean();
+        const { data, error } = await supabase
+            .from('requests')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-        const data = docs.map((doc: any) => ({
-            id: doc._id.toString(),
-            name: doc.businessName || "Unknown",
-            businessName: doc.businessName,
+        if (error) throw error;
+
+        // Map Supabase data to frontend format
+        const formattedData = (data as RequestData[]).map(doc => ({
+            id: doc.id,
+            name: doc.business_name || "Unknown",
+            businessName: doc.business_name,
             email: doc.email,
             whatsapp: doc.whatsapp,
-            projectType: doc.serviceType,
-            serviceType: doc.serviceType,
+            projectType: doc.service_type,
+            serviceType: doc.service_type,
             budget: doc.budget,
             description: doc.description,
             status: doc.status || 'New',
-            createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
-            date: doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
+            createdAt: doc.created_at,
+            date: new Date(doc.created_at).toLocaleDateString(),
         }));
 
-        return { success: true, data };
+        return { success: true, data: formattedData };
     } catch (error) {
         console.error('Failed to fetch submissions:', error);
         return { success: false, data: [] };
@@ -67,8 +71,12 @@ export async function getSubmissionsAction() {
 
 export async function deleteSubmissionAction(id: string) {
     try {
-        await dbConnect();
-        await Request.findByIdAndDelete(id);
+        const { error } = await supabase
+            .from('requests')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
         return { success: true };
     } catch (error) {
         console.error('Failed to delete submission:', error);
@@ -78,8 +86,12 @@ export async function deleteSubmissionAction(id: string) {
 
 export async function updateSubmissionStatusAction(id: string, status: any) {
     try {
-        await dbConnect();
-        await Request.findByIdAndUpdate(id, { status });
+        const { error } = await supabase
+            .from('requests')
+            .update({ status })
+            .eq('id', id);
+
+        if (error) throw error;
         return { success: true };
     } catch (error) {
         console.error('Failed to update submission status:', error);

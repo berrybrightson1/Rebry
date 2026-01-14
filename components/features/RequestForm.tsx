@@ -3,152 +3,111 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { Input } from "@/components/ui/Input";
-import { PillButton } from "@/components/ui/PillButton";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Check, Loader2, Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
+import { PillButton } from "@/components/ui/PillButton";
 
-// Schema
 const formSchema = z.object({
-    businessName: z.string().min(2, "Business name is required"),
-    serviceType: z.enum(["ecommerce", "corporate", "webapp", "landing"]),
-    budget: z.string(),
-    whatsapp: z.string().min(10, "Valid WhatsApp number required"),
+    name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
-    description: z.string().optional(),
+    whatsapp: z.string().min(10, "Invalid WhatsApp number"),
+    projectType: z.string().min(1, "Please select a project type"),
+    budget: z.string().min(1, "Please select a budget range"),
+    description: z.string().min(10, "Please describe your project"),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-export function RequestForm() {
+export default function RequestForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-        reset,
-    } = useForm<FormData>({
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(formSchema),
     });
 
     const onSubmit = async (data: FormData) => {
         setIsSubmitting(true);
         try {
-            const response = await fetch("/api/request", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            });
+            const { submitProjectRequest } = await import("@/app/actions/submit-project");
+            const result = await submitProjectRequest(data);
 
-            if (!response.ok) {
-                throw new Error("Failed to submit request");
+            if (result.success) {
+                setIsSuccess(true);
+                reset();
+                setTimeout(() => setIsSuccess(false), 5000);
+            } else {
+                console.error("Submission failed");
             }
-
-            console.log("Form Data Submitted:", data);
-            setIsSuccess(true);
-            reset();
-            setTimeout(() => setIsSuccess(false), 5000); // Reset success after 5s
         } catch (error) {
             console.error("Error submitting form:", error);
-            // Optionally set an error state here to show to the user
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="w-full max-w-lg mx-auto">
-            <AnimatePresence mode="wait">
-                {isSuccess ? (
-                    <GlassCard key="success" className="text-center py-16 flex flex-col items-center justify-center border-green-500/30">
-                        <motion.div
-                            initial={{ scale: 0, rotate: -180 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(34,197,94,0.4)]"
-                        >
-                            <Check className="w-10 h-10 text-white" strokeWidth={3} />
-                        </motion.div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Request Received!</h3>
-                        <p className="text-gray-300">We'll be in touch via WhatsApp shortly.</p>
-                    </GlassCard>
-                ) : (
-                    <GlassCard key="form">
-                        <h2 className="text-2xl font-bold text-white mb-6">Start a Project</h2>
-                        <p className="text-gray-300 mb-6">Tell me about your vision.</p>
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Form Fields would go here - preserving implementation structure */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Name / Business</label>
+                    <input {...register("name")} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500/50 outline-none transition-colors" placeholder="e.g., Berry Inc." />
+                    {errors.name && <p className="text-red-400 text-xs">{errors.name.message}</p>}
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Email Address</label>
+                    <input {...register("email")} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500/50 outline-none transition-colors" placeholder="hello@example.com" />
+                    {errors.email && <p className="text-red-400 text-xs">{errors.email.message}</p>}
+                </div>
+            </div>
 
-                            <div>
-                                <Input placeholder="Business Name" {...register("businessName")} />
-                                {errors.businessName && <p className="text-red-400 text-xs mt-1 ml-1">{errors.businessName.message}</p>}
-                            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">WhatsApp Number</label>
+                    <input {...register("whatsapp")} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500/50 outline-none transition-colors" placeholder="+1 234 567 8900" />
+                    {errors.whatsapp && <p className="text-red-400 text-xs">{errors.whatsapp.message}</p>}
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Project Type</label>
+                    <select {...register("projectType")} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 focus:text-white focus:border-blue-500/50 outline-none transition-colors appearance-none" >
+                        <option value="">Select Type</option>
+                        <option value="web-app">Web Application</option>
+                        <option value="mobile-app">Mobile App</option>
+                        <option value="website">Website</option>
+                        <option value="other">Other</option>
+                    </select>
+                    {errors.projectType && <p className="text-red-400 text-xs">{errors.projectType.message}</p>}
+                </div>
+            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <select
-                                        {...register("serviceType")}
-                                        defaultValue=""
-                                        className="flex h-12 w-full rounded-xl border border-spatial-border bg-white/40 px-4 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-accent outline-none appearance-none cursor-pointer hover:bg-white/50 transition-colors"
-                                    >
-                                        <option value="" disabled>Service Type</option>
-                                        <option value="ecommerce" className="bg-gray-900 text-white">E-Commerce</option>
-                                        <option value="corporate" className="bg-gray-900 text-white">Corporate Site</option>
-                                        <option value="webapp" className="bg-gray-900 text-white">Web App</option>
-                                        <option value="landing" className="bg-gray-900 text-white">Landing Page</option>
-                                    </select>
-                                    {errors.serviceType && <p className="text-red-500 text-xs mt-1 ml-1">{errors.serviceType.message}</p>}
-                                </div>
-                                <div>
-                                    <select
-                                        {...register("budget")}
-                                        defaultValue=""
-                                        className="flex h-12 w-full rounded-xl border border-spatial-border bg-white/40 px-4 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-accent outline-none appearance-none cursor-pointer hover:bg-white/50 transition-colors"
-                                    >
-                                        <option value="" disabled>Budget Range</option>
-                                        <option value="low" className="bg-gray-900 text-white">$500 - $1k</option>
-                                        <option value="medium" className="bg-gray-900 text-white">$1k - $3k</option>
-                                        <option value="high" className="bg-gray-900 text-white">$3k+</option>
-                                    </select>
-                                </div>
-                            </div>
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Budget Range</label>
+                <select {...register("budget")} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 focus:text-white focus:border-blue-500/50 outline-none transition-colors appearance-none">
+                    <option value="">Select Budget</option>
+                    <option value="less-1k">&lt; $1k</option>
+                    <option value="1k-5k">$1k - $5k</option>
+                    <option value="5k-10k">$5k - $10k</option>
+                    <option value="10k+">$10k+</option>
+                </select>
+                {errors.budget && <p className="text-red-400 text-xs">{errors.budget.message}</p>}
+            </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <Input placeholder="WhatsApp Number" type="tel" {...register("whatsapp")} />
-                                    {errors.whatsapp && <p className="text-red-400 text-xs mt-1 ml-1">{errors.whatsapp.message}</p>}
-                                </div>
-                                <div>
-                                    <Input placeholder="Email Address" type="email" {...register("email")} />
-                                    {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{errors.email.message}</p>}
-                                </div>
-                            </div>
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Project Description</label>
+                <textarea {...register("description")} rows={4} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500/50 outline-none transition-colors resize-none" placeholder="Tell us about your idea..." />
+                {errors.description && <p className="text-red-400 text-xs">{errors.description.message}</p>}
+            </div>
 
-                            <textarea
-                                placeholder="Tell us a bit about your project..."
-                                {...register("description")}
-                                className="flex min-h-[100px] w-full rounded-xl border border-spatial-border bg-black/20 px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-transparent text-foreground transition-all duration-200 hover:bg-black/30 resize-none"
-                            />
+            <PillButton type="submit" className="w-full justify-center group" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Submit Request <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}
+            </PillButton>
 
-                            <PillButton type="submit" className="w-full" disabled={isSubmitting}>
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" /> Sending...
-                                    </>
-                                ) : (
-                                    <>
-                                        Send Request <Send className="w-4 h-4" />
-                                    </>
-                                )}
-                            </PillButton>
-                        </form>
-                    </GlassCard>
-                )}
-            </AnimatePresence>
-        </div>
+            {isSuccess && (
+                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-center text-sm font-medium animate-in fade-in slide-in-from-bottom-2">
+                    Request submitted successfully! We'll allow you to connect Supabase soon.
+                </div>
+            )}
+        </form>
     );
 }
