@@ -1,6 +1,6 @@
 import { GlassCard } from "@/components/ui/GlassCard";
 import { PillButton } from "@/components/ui/PillButton";
-import { ProjectGallery } from "@/components/features/ProjectGallery";
+import { HomeSlider } from "@/components/features/HomeSlider";
 import { HeroSection } from "@/components/features/HeroSection";
 import { PremiumCTA } from "@/components/features/PremiumCTA";
 import { Mail, Phone, Github } from "lucide-react";
@@ -50,7 +50,7 @@ export default function Home() {
 
           {/* Project Gallery (Restored as Hero) */}
           <div className="w-full">
-            <ProjectGallery showFilter={false} />
+            <HomeSlider />
           </div>
 
           {/* Text Content (Premium Animated Section) */}
