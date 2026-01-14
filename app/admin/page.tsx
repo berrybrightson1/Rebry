@@ -712,10 +712,10 @@ export default function AdminPage() {
                                                                 </a>
                                                                 <button
                                                                     onClick={() => handleDelete(selectedSubmission.id)}
-                                                                    className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center border border-red-500/20 shrink-0 transition-colors"
-                                                                    title="Delete Request"
+                                                                    className="w-full h-11 md:h-12 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center gap-2 border border-red-500/20 transition-colors mt-1"
                                                                 >
                                                                     <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                                                                    <span className="text-[11px] md:text-base font-medium">Delete Project Request</span>
                                                                 </button>
                                                             </div>
                                                         </div>

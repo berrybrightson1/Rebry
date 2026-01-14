@@ -35,8 +35,8 @@ export function AlertModal({ isOpen, onClose, onConfirm, title, message, type = 
                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         className="pointer-events-auto"
                     >
-                        <GlassCard className="pl-2 pr-6 py-2 bg-[#1A1A1A] border-white/5 shadow-2xl rounded-full min-w-[320px] max-w-fit mx-auto ring-1 ring-white/5">
-                            <div className="flex items-center gap-3">
+                        <GlassCard className="pl-2 pr-3 md:pr-6 py-2 bg-[#1A1A1A] border-white/5 shadow-2xl rounded-[20px] md:rounded-full w-full max-w-[92vw] md:max-w-fit md:min-w-[320px] mx-auto ring-1 ring-white/5">
+                            <div className="flex items-center gap-2 md:gap-3">
                                 <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${type === 'error' ? 'bg-[#3A1D1D] text-[#FF4545]' :
                                     type === 'success' ? 'bg-[#1D3A24] text-[#45FF6E]' :
                                         type === 'warning' ? 'bg-[#3A2E1D] text-[#FFB845]' :
@@ -45,22 +45,22 @@ export function AlertModal({ isOpen, onClose, onConfirm, title, message, type = 
                                     <AlertCircle className="w-5 h-5 stroke-[2.5px]" />
                                 </div>
 
-                                <div className="flex-1 text-left flex flex-col justify-center mr-4">
-                                    <h3 className="text-[15px] font-extrabold text-white leading-none tracking-tight whitespace-nowrap">{title}</h3>
-                                    <p className="text-[13px] text-gray-400 mt-1 leading-none font-medium whitespace-nowrap">{message}</p>
+                                <div className="flex-1 text-left flex flex-col justify-center min-w-0">
+                                    <h3 className="text-[14px] md:text-[15px] font-extrabold text-white leading-tight tracking-tight">{title}</h3>
+                                    <p className="text-[12px] md:text-[13px] text-gray-400 mt-0.5 md:mt-1 leading-tight font-medium">{message}</p>
                                 </div>
 
                                 {onConfirm && (
-                                    <div className="flex items-center gap-2 pl-4 border-l border-white/10">
+                                    <div className="flex items-center gap-1 md:gap-2 pl-2 md:pl-4 border-l border-white/10 shrink-0">
                                         <button
                                             onClick={onClose}
-                                            className="px-3 py-1 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                                            className="px-2 md:px-3 py-1 text-[11px] md:text-xs font-medium text-gray-400 hover:text-white transition-colors"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={onConfirm}
-                                            className="px-3 py-1 text-xs font-bold bg-white text-black rounded-full hover:bg-gray-200 transition-colors"
+                                            className="px-3 md:px-3 py-1.5 md:py-1 text-[11px] md:text-xs font-bold bg-white text-black rounded-full hover:bg-gray-200 transition-colors"
                                         >
                                             Confirm
                                         </button>
