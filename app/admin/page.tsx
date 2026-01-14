@@ -95,6 +95,14 @@ export default function AdminPage() {
         setAlertConfig({ isOpen: true, title, message, type, onConfirm });
     };
 
+    // Check for persisted session
+    useEffect(() => {
+        const isAuth = localStorage.getItem("adminAuthenticated");
+        if (isAuth === "true") {
+            setIsAuthenticated(true);
+        }
+    }, []);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -102,6 +110,7 @@ export default function AdminPage() {
 
         if (password === "0020") {
             setIsAuthenticated(true);
+            localStorage.setItem("adminAuthenticated", "true");
         } else {
             showAlert("Access Denied", "Incorrect password.", "error");
         }
@@ -326,7 +335,7 @@ export default function AdminPage() {
                     </nav>
 
                     <div className="mt-auto">
-                        <button onClick={() => setIsAuthenticated(false)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10">
+                        <button onClick={() => { setIsAuthenticated(false); localStorage.removeItem("adminAuthenticated"); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10">
                             <LogOut className="w-5 h-5" /> Log Out
                         </button>
                     </div>
@@ -423,7 +432,7 @@ export default function AdminPage() {
                                                             {/* Message */}
                                                             <div>
                                                                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Project Description</h3>
-                                                                <div className="bg-white/5 rounded-2xl p-6 text-gray-200 leading-relaxed text-lg border border-white/5">
+                                                                <div className="bg-white/5 rounded-2xl p-6 text-gray-200 leading-relaxed text-lg border border-white/5 whitespace-pre-wrap">
                                                                     {selectedSubmission.description}
                                                                 </div>
                                                             </div>
@@ -546,8 +555,8 @@ export default function AdminPage() {
                                                             </div>
                                                             <div className="text-right">
                                                                 <span className={`text-xs px-2 py-1 rounded-full border ${sub.status === 'New' ? 'text-blue-400 border-blue-500/20 bg-blue-500/10' :
-                                                                        sub.status === 'Contacted' ? 'text-yellow-400 border-yellow-500/20 bg-yellow-500/10' :
-                                                                            'text-green-400 border-green-500/20 bg-green-500/10'
+                                                                    sub.status === 'Contacted' ? 'text-yellow-400 border-yellow-500/20 bg-yellow-500/10' :
+                                                                        'text-green-400 border-green-500/20 bg-green-500/10'
                                                                     }`}>{sub.status}</span>
                                                                 <p className="text-xs text-gray-500 mt-2">{new Date(sub.createdAt).toLocaleDateString()}</p>
                                                             </div>
