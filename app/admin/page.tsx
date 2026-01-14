@@ -8,10 +8,13 @@ import {
     Mail, MessageSquare, Trash2, Settings, User, LogOut, Camera,
     Lock, ArrowRight, ShieldCheck, LayoutDashboard, CheckCircle,
     Clock, PieChart, TrendingUp, DollarSign, Search, Filter, Menu, X, Phone,
-    ArrowLeft, RefreshCw, MessageCircle
+    ArrowLeft, RefreshCw, MessageCircle, Briefcase, Users, Upload, Image as ImageIcon, HardDrive
 } from "lucide-react";
 import { AlertModal } from "@/components/ui/AlertModal";
 import { getSubmissionsAction, deleteSubmissionAction, updateSubmissionStatusAction } from "@/app/actions/submit-project";
+import { getProjectsAction, createProjectAction, deleteProjectAction } from "@/app/actions/projects";
+import { supabase } from "@/utils/supabase/client"; // Client-side for storage
+
 import { motion, AnimatePresence } from "framer-motion";
 
 // Define locally since we changed the source
@@ -28,6 +31,20 @@ interface Submission {
     createdAt: string;
 }
 
+interface Project {
+    id: string;
+    title: string;
+    category: string;
+    image_url: string;
+    width: number;
+    height: number;
+    created_at: string;
+    gallery?: string[];
+    project_url?: string;
+}
+
+
+
 export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState("");
@@ -38,6 +55,23 @@ export default function AdminPage() {
 
     // Master-Detail State
     const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+
+    // Projects State - General Upload (Left)
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadConfig, setUploadConfig] = useState({ title: "", category: "Web App" });
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [dragActive, setDragActive] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Web & Mobile Upload State (Right)
+    const [isUploadingWeb, setIsUploadingWeb] = useState(false);
+    const [uploadConfigWeb, setUploadConfigWeb] = useState({ title: "", category: "Web App", project_url: "" });
+    const [selectedFilesWeb, setSelectedFilesWeb] = useState<File[]>([]);
+    const [dragActiveWeb, setDragActiveWeb] = useState(false);
+    const fileInputRefWeb = useRef<HTMLInputElement>(null);
+
+
 
     // Background Blobs State
     const [blobs, setBlobs] = useState<{ color: string, className: string, style: React.CSSProperties }[]>([]);
@@ -82,14 +116,19 @@ export default function AdminPage() {
     }, [isAuthenticated]);
 
     const fetchData = async (silent = false) => {
-        const result = await getSubmissionsAction();
-        if (result.success) {
-            // Check if data actually changed to avoid unnecessary re-renders if strict check needed, 
-            // but React state diffing usually handles this.
-            // However, to be safe and ensure smooth UX, just set it.
-            setSubmissions(result.data as Submission[]);
+        const [submissionsResult, projectsResult] = await Promise.all([
+            getSubmissionsAction(),
+            getProjectsAction()
+        ]);
+
+        if (submissionsResult.success) {
+            setSubmissions(submissionsResult.data as Submission[]);
+        }
+        if (projectsResult.success) {
+            setProjects(projectsResult.data as Project[]);
         }
     };
+
 
     const showAlert = (title: string, message: string, type: "error" | "success" | "info" | "warning" = "error", onConfirm?: () => void) => {
         setAlertConfig({ isOpen: true, title, message, type, onConfirm });
@@ -147,6 +186,214 @@ export default function AdminPage() {
         } else {
             showAlert("Error", "Failed to update status.", "error");
         }
+    };
+
+    // Project Handlers
+    const handleDrag = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === "dragenter" || e.type === "dragover") {
+            setDragActive(true);
+        } else if (e.type === "dragleave") {
+            setDragActive(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            setSelectedFiles(Array.from(e.dataTransfer.files));
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    // Web & Mobile Upload Handlers
+    const handleDragWeb = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === "dragenter" || e.type === "dragover") {
+            setDragActiveWeb(true);
+        } else if (e.type === "dragleave") {
+            setDragActiveWeb(false);
+        }
+    };
+
+    const handleDropWeb = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActiveWeb(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            setSelectedFilesWeb(Array.from(e.dataTransfer.files));
+        }
+    };
+
+    const handleFileSelectWeb = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setSelectedFilesWeb(prev => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    const handleUploadProject = async () => {
+        if (selectedFiles.length === 0 || !uploadConfig.title) {
+            showAlert("Missing Info", "Please provide a title and select at least one image.", "warning");
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const uploadedUrls: string[] = [];
+            let mainImageDimensions = { w: 0, h: 0 };
+
+            // Upload all files
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${i}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('projects')
+                    .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('projects')
+                    .getPublicUrl(filePath);
+
+                uploadedUrls.push(publicUrl);
+
+                // Get dimensions of first image for DB reqs
+                if (i === 0) {
+                    mainImageDimensions = await new Promise<{ w: number, h: number }>((resolve) => {
+                        const img = new Image();
+                        img.onload = () => resolve({ w: img.width, h: img.height });
+                        img.onerror = () => resolve({ w: 0, h: 0 });
+                        img.src = URL.createObjectURL(file);
+                    });
+                }
+            }
+
+            // 4. Save to DB
+            const result = await createProjectAction({
+                title: uploadConfig.title,
+                category: uploadConfig.category,
+                image_url: uploadedUrls[0], // Main image
+                width: mainImageDimensions.w,
+                height: mainImageDimensions.h,
+                gallery: uploadedUrls // All images
+            });
+
+            if (result.success) {
+                showAlert("Success", "Project uploaded successfully!", "success");
+                setUploadConfig({ title: "", category: "Web App" });
+                setSelectedFiles([]);
+                fetchData(); // Refresh list
+            } else {
+                throw new Error("Failed to save project record.");
+            }
+
+        } catch (error: unknown) {
+            console.error("Upload failed", error);
+            const message = error instanceof Error ? error.message : "Failed to upload project.";
+            showAlert("Error", message, "error");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleUploadProjectWeb = async () => {
+        if (selectedFilesWeb.length === 0 || !uploadConfigWeb.title) {
+            showAlert("Missing Info", "Please provide a title and select at least one image.", "warning");
+            return;
+        }
+
+        setIsUploadingWeb(true);
+        try {
+            const uploadedUrls: string[] = [];
+            let mainImageDimensions = { w: 0, h: 0 };
+
+            // Upload all files
+            for (let i = 0; i < selectedFilesWeb.length; i++) {
+                const file = selectedFilesWeb[i];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${i}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('projects')
+                    .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('projects')
+                    .getPublicUrl(filePath);
+
+                uploadedUrls.push(publicUrl);
+
+                // Get dimensions of first image for DB reqs
+                if (i === 0) {
+                    mainImageDimensions = await new Promise<{ w: number, h: number }>((resolve) => {
+                        const img = new Image();
+                        img.onload = () => resolve({ w: img.width, h: img.height });
+                        img.onerror = () => resolve({ w: 0, h: 0 });
+                        img.src = URL.createObjectURL(file);
+                    });
+                }
+            }
+
+            // Save to DB
+            const result = await createProjectAction({
+                title: uploadConfigWeb.title,
+                category: uploadConfigWeb.category,
+                image_url: uploadedUrls[0], // Main image
+                width: mainImageDimensions.w,
+                height: mainImageDimensions.h,
+                gallery: uploadedUrls, // All images
+                project_url: uploadConfigWeb.project_url // Project link
+            });
+
+            if (result.success) {
+                showAlert("Success", "Project uploaded successfully!", "success");
+                setUploadConfigWeb({ title: "", category: "Web App", project_url: "" });
+                setSelectedFilesWeb([]);
+                fetchData(); // Refresh list
+            } else {
+                throw new Error("Failed to save project record.");
+            }
+
+        } catch (error: unknown) {
+            console.error("Upload failed", error);
+            const message = error instanceof Error ? error.message : "Failed to upload project.";
+            showAlert("Error", message, "error");
+        } finally {
+            setIsUploadingWeb(false);
+        }
+    };
+
+    const handleDeleteProject = async (id: string) => {
+        showAlert(
+            "Delete Project",
+            "Are you sure you want to delete this project? This action cannot be undone.",
+            "warning",
+            async () => {
+                const result = await deleteProjectAction(id);
+                if (result.success) {
+                    setProjects(prev => prev.filter(p => p.id !== id));
+                    showAlert("Success", "Project deleted successfully", "success");
+                } else {
+                    showAlert("Error", "Failed to delete project", "error");
+                }
+            }
+        );
     };
 
     // Settings State
@@ -310,6 +557,8 @@ export default function AdminPage() {
                         {[
                             { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
                             { id: 'requests', icon: MessageSquare, label: 'Requests', count: newLeads > 0 ? newLeads : undefined },
+                            { id: 'projects', icon: Briefcase, label: 'Projects' },
+                            { id: 'clients', icon: Users, label: 'Clients' },
                             { id: 'analytics', icon: PieChart, label: 'Analytics' },
                             { id: 'settings', icon: Settings, label: 'Settings' },
                         ].map((item) => (
@@ -450,6 +699,9 @@ export default function AdminPage() {
                                                                         Chat on WhatsApp
                                                                     </a>
                                                                 )}
+                                                                {selectedFiles.length > 0 && (
+                                                                    <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="w-16 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 flex items-center justify-center transition-colors group" aria-label="Add more files"><span className="text-2xl text-white/40 group-hover:text-white/60 transition-colors">+</span></button>
+                                                                )}
                                                                 <a
                                                                     href={`mailto:${selectedSubmission.email}`}
                                                                     className="flex-1 bg-white/10 hover:bg-white/20 text-white h-12 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border border-white/10"
@@ -517,7 +769,7 @@ export default function AdminPage() {
                                                 {['All', 'New', 'Contacted', 'Completed'].map(status => (
                                                     <button
                                                         key={status}
-                                                        onClick={() => setStatusFilter(status as any)}
+                                                        onClick={() => setStatusFilter(status as "All" | "New" | "Contacted" | "Completed")}
                                                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === status
                                                             ? 'bg-blue-600 text-white'
                                                             : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
@@ -568,6 +820,283 @@ export default function AdminPage() {
                                     </motion.div>
                                 )}
                             </AnimatePresence>
+                        )}
+
+
+
+                        {activeTab === 'clients' && (
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-xl font-bold text-white">Client Directory</h3>
+                                    <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-gray-400">
+                                        Total Clients: <span className="text-white font-bold ml-2">
+                                            {new Set(submissions.map(s => s.email)).size}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {Array.from(new Set(submissions.map(s => s.email))).map((email) => {
+                                        const clientSubs = submissions.filter(s => s.email === email);
+                                        const mainProfile = clientSubs[0];
+                                        const totalSpent = clientSubs.reduce((acc, curr) => {
+                                            let val = 0;
+                                            if (curr.budget === 'less-1k' || curr.budget === 'low') val = 500;
+                                            else if (curr.budget === '1k-5k' || curr.budget === 'medium') val = 2500;
+                                            else if (curr.budget === '5k-10k' || curr.budget === 'high') val = 7500;
+                                            else if (curr.budget === '10k+') val = 15000;
+                                            else val = 1000;
+                                            return acc + val;
+                                        }, 0);
+
+                                        return (
+                                            <GlassCard key={email} className="p-6 relative overflow-hidden group">
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center text-white font-bold text-lg border border-white/10">
+                                                        {mainProfile.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <span className="text-xs font-mono text-gray-500 bg-white/5 px-2 py-1 rounded">
+                                                        {clientSubs.length} Request{clientSubs.length !== 1 ? 's' : ''}
+                                                    </span>
+                                                </div>
+
+                                                <h4 className="text-lg font-bold text-white mb-1 truncate" title={mainProfile.name}>{mainProfile.name}</h4>
+                                                <div className="space-y-2 mb-4">
+                                                    <a href={`mailto:${email}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors">
+                                                        <Mail className="w-3 h-3" /> {email}
+                                                    </a>
+                                                    {mainProfile.whatsapp && (
+                                                        <a href={`https://wa.me/${mainProfile.whatsapp.replace(/\D/g, '')}`} target="_blank" className="flex items-center gap-2 text-sm text-gray-400 hover:text-green-400 transition-colors">
+                                                            <Phone className="w-3 h-3" /> {mainProfile.whatsapp}
+                                                        </a>
+                                                    )}
+                                                    {selectedFiles.length > 0 && (
+                                                        <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="w-16 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 flex items-center justify-center transition-colors group" aria-label="Add more files"><span className="text-2xl text-white/40 group-hover:text-white/60 transition-colors">+</span></button>
+                                                    )}
+                                                </div>
+
+                                                <div className="pt-4 border-t border-white/5 flex justify-between items-center">
+                                                    <span className="text-xs text-gray-500 uppercase tracking-widest">Est. Value</span>
+                                                    <span className="text-green-400 font-bold">${(totalSpent / 1000).toFixed(1)}k</span>
+                                                </div>
+                                            </GlassCard>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'projects' && (
+                            <div className="space-y-8">
+                                {/* Upload Forms - Side by Side */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Upload Form 1 - General Projects */}
+                                    <GlassCard className="p-6 space-y-4">
+                                        <h3 className="text-lg font-bold text-white mb-2">Upload New Project</h3>
+                                        <p className="text-xs text-gray-400 -mt-2 mb-4">For Graphics Design on homepage</p>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-medium text-gray-400">Project Title</label>
+                                                <Input
+                                                    value={uploadConfig.title}
+                                                    onChange={(e) => setUploadConfig(prev => ({ ...prev, title: e.target.value }))}
+                                                    placeholder="e.g. Neon Brand Identity"
+                                                    className="bg-black/20"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-medium text-gray-400">Category</label>
+                                                <select
+                                                    value={uploadConfig.category}
+                                                    onChange={(e) => setUploadConfig(prev => ({ ...prev, category: e.target.value }))}
+                                                    className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-blue-500 focus:bg-white/10 transition-all cursor-pointer hover:bg-white/10"
+                                                >
+                                                    <option value="Web App" className="bg-neutral-900 text-white">Web App</option>
+                                                    <option value="Mobile App" className="bg-neutral-900 text-white">Mobile App</option>
+                                                    <option value="Branding" className="bg-neutral-900 text-white">Branding</option>
+                                                    <option value="Print Design" className="bg-neutral-900 text-white">Print Design</option>
+                                                    <option value="3D Art" className="bg-neutral-900 text-white">3D Art</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Dropzone */}
+                                            <div
+                                                className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${dragActive ? "border-blue-500 bg-blue-500/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}
+                                                onDragEnter={handleDrag}
+                                                onDragLeave={handleDrag}
+                                                onDragOver={handleDrag}
+                                                onDrop={handleDrop}
+                                                onClick={() => fileInputRef.current?.click()}
+                                            >
+                                                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*" multiple />
+                                                <div className="flex flex-wrap justify-center gap-2 mb-4">
+                                                    {selectedFiles.length > 0 ? (
+                                                        selectedFiles.map((file, i) => (
+                                                            <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/10 shadow-sm group">
+                                                                <img
+                                                                    src={URL.createObjectURL(file)}
+                                                                    className="w-full h-full object-cover"
+                                                                    alt="Preview"
+                                                                />
+                                                                <button onClick={(e) => { e.stopPropagation(); setSelectedFiles(prev => prev.filter((_, idx) => idx !== i)); }} className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Remove file"><X className="w-3 h-3 text-white" /></button>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto">
+                                                            <Upload className="w-6 h-6 text-gray-400" />
+                                                        </div>
+                                                    )}
+                                                    {selectedFiles.length > 0 && (
+                                                        <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="w-16 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 flex items-center justify-center transition-colors group" aria-label="Add more files"><span className="text-2xl text-white/40 group-hover:text-white/60 transition-colors">+</span></button>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-gray-400">
+                                                    {selectedFiles.length > 0
+                                                        ? `${selectedFiles.length} file(s) selected`
+                                                        : "Drag images here or click to browse"}
+                                                </p>
+                                                <p className="text-xs text-gray-600 mt-1">Supports multiple files</p>
+                                            </div>
+
+                                            <PillButton
+                                                onClick={handleUploadProject}
+                                                disabled={isUploading || selectedFiles.length === 0}
+                                                className="w-full justify-center"
+                                            >
+                                                {isUploading ? "Uploading..." : "Publish Project"}
+                                            </PillButton>
+
+                                            {/* Layout Guide */}
+                                            <div className="text-xs text-gray-500 space-y-1 pt-2 border-t border-white/5">
+                                                <p className="font-medium text-gray-400">Recommended ratios:</p>
+                                                <div className="flex gap-3">
+                                                    <span>4:5</span>
+                                                    <span>1:1</span>
+                                                    <span>16:9</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </GlassCard>
+
+                                    {/* Upload Form 2 - Web & Mobile Pages ONLY */}
+                                    <GlassCard className="p-6 space-y-4 border-2 border-blue-500/30">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                            <h3 className="text-lg font-bold text-white">Upload Web & Mobile Pages</h3>
+                                        </div>
+                                        <p className="text-xs text-gray-400 -mt-2 mb-4">For tablet frame display on homepage</p>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-medium text-gray-400">Project Title</label>
+                                                <Input
+                                                    value={uploadConfigWeb.title}
+                                                    onChange={(e) => setUploadConfigWeb(prev => ({ ...prev, title: e.target.value }))}
+                                                    placeholder="e.g. Neon Dashboard"
+                                                    className="bg-black/20 border-blue-500/20 focus:border-blue-500/50"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-medium text-gray-400">Project URL (Live/Demo Link)</label>
+                                                <Input
+                                                    value={uploadConfigWeb.project_url}
+                                                    onChange={(e) => setUploadConfigWeb(prev => ({ ...prev, project_url: e.target.value }))}
+                                                    placeholder="e.g. https://example.com"
+                                                    className="bg-black/20 border-blue-500/20 focus:border-blue-500/50"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-medium text-gray-400">Page Type</label>
+                                                <select
+                                                    value={uploadConfigWeb.category}
+                                                    onChange={(e) => setUploadConfigWeb(prev => ({ ...prev, category: e.target.value }))}
+                                                    className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-blue-500 focus:bg-white/10 transition-all cursor-pointer hover:bg-white/10"
+                                                >
+                                                    <option value="Web App" className="bg-neutral-900 text-white">Web App</option>
+                                                    <option value="Mobile App" className="bg-neutral-900 text-white">Mobile App</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Dropzone */}
+                                            <div
+                                                className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${dragActiveWeb ? "border-blue-500 bg-blue-500/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}
+                                                onDragEnter={handleDragWeb}
+                                                onDragLeave={handleDragWeb}
+                                                onDragOver={handleDragWeb}
+                                                onDrop={handleDropWeb}
+                                                onClick={() => fileInputRefWeb.current?.click()}
+                                            >
+                                                <input ref={fileInputRefWeb} type="file" className="hidden" onChange={handleFileSelectWeb} accept="image/*" multiple />
+                                                <div className="flex flex-wrap justify-center gap-2 mb-4">
+                                                    {selectedFilesWeb.length > 0 ? (
+                                                        selectedFilesWeb.map((file, i) => (
+                                                            <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/10 shadow-sm group">
+                                                                <img
+                                                                    src={URL.createObjectURL(file)}
+                                                                    className="w-full h-full object-cover"
+                                                                    alt="Preview"
+                                                                />
+                                                                <button onClick={(e) => { e.stopPropagation(); setSelectedFilesWeb(prev => prev.filter((_, idx) => idx !== i)); }} className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Remove file"><X className="w-3 h-3 text-white" /></button>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto">
+                                                            <Upload className="w-6 h-6 text-gray-400" />
+                                                        </div>
+                                                    )}
+                                                    {selectedFilesWeb.length > 0 && (
+                                                        <button onClick={(e) => { e.stopPropagation(); fileInputRefWeb.current?.click(); }} className="w-16 h-16 rounded-lg border-2 border-dashed border-blue-500/30 hover:border-blue-500/60 flex items-center justify-center transition-colors group" aria-label="Add more files"><span className="text-2xl text-blue-400/60 group-hover:text-blue-400 transition-colors">+</span></button>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-gray-400">
+                                                    {selectedFilesWeb.length > 0
+                                                        ? `${selectedFilesWeb.length} file(s) selected`
+                                                        : "Drag images here or click to browse"}
+                                                </p>
+                                                <p className="text-xs text-gray-600 mt-1">Supports multiple files</p>
+                                            </div>
+
+                                            <PillButton
+                                                onClick={handleUploadProjectWeb}
+                                                disabled={isUploadingWeb || selectedFilesWeb.length === 0}
+                                                className="w-full justify-center"
+                                            >
+                                                {isUploadingWeb ? "Uploading..." : "Publish Project"}
+                                            </PillButton>
+
+                                            {/* Layout Guide */}
+                                            <div className="text-xs text-gray-500 space-y-1 pt-2 border-t border-blue-500/20">
+                                                <p className="font-medium text-blue-400">Tablet ratio:</p>
+                                                <div className="flex gap-3">
+                                                    <span className="text-blue-400 font-bold">16:9</span>
+                                                    <span className="text-gray-600">(Landscape)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </GlassCard>
+                                </div>
+
+                                {/* List */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-white mb-4">Gallery ({projects.length})</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                        {projects.map((project) => (
+                                            <div key={project.id} className="relative group aspect-[4/5] rounded-xl overflow-hidden bg-white/5 border border-white/10">
+                                                <img src={project.image_url} alt={project.title} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
+                                                    <p className="text-sm font-bold text-white line-clamp-1">{project.title}</p>
+                                                    <p className="text-xs text-gray-400 mb-3">{project.category}</p>
+                                                    <button
+                                                        onClick={() => handleDeleteProject(project.id)}
+                                                        className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         )}
 
                         {activeTab === 'analytics' && (
@@ -624,7 +1153,7 @@ export default function AdminPage() {
                         )}
                     </div>
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

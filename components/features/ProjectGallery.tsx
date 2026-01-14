@@ -7,117 +7,156 @@ import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // --- DATA ---
-const webApps = [
-    {
-        id: 1,
-        title: "E-Commerce Dashboard",
-        category: "Web App",
-        image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop",
-        description: "A high-performance analytics dashboard for online retailers."
-    },
-    {
-        id: 2,
-        title: "AI Content Generator",
-        category: "SaaS Platform",
-        image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=2532&auto=format&fit=crop",
-        description: "Next-generation content creation tool powered by LLMs."
-    },
-    {
-        id: 3,
-        title: "Fintech Mobile App",
-        category: "Mobile Design",
-        image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=1470&auto=format&fit=crop",
-        description: "Secure and intuitive banking experience for the modern era."
-    }
-];
+import { Lightbox } from "../ui/Lightbox";
+import { getProjectsAction } from "@/app/actions/projects";
 
-const graphics = [
-    {
-        id: 101,
-        title: "Neon Brand Identity",
-        category: "Branding",
-        image: "https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2500&auto=format&fit=crop",
-        size: "large"
-    },
-    {
-        id: 102,
-        title: "Future Festival Poster",
-        category: "Print Design",
-        image: "https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=2400&auto=format&fit=crop",
-        size: "small"
-    },
-    {
-        id: 103,
-        title: "3D Cubist Abstract",
-        category: "3D Art",
-        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
-        size: "small"
-    },
-    {
-        id: 104,
-        title: "Editorial Layout",
-        category: "Typography",
-        image: "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?q=80&w=2500&auto=format&fit=crop",
-        size: "large"
-    }
-];
+interface Project {
+    id: string;
+    title: string;
+    category: string;
+    image_url: string;
+    width: number;
+    height: number;
+    description?: string;
+    gallery?: string[];
+    project_url?: string;
+}
+
+// Fallback data (optional, can be empty)
+const webApps: Project[] = [];
+const graphics: Project[] = [];
+
 
 export function ProjectGallery({ showFilter = true }: { showFilter?: boolean }) {
     const [activeTab, setActiveTab] = useState<"apps" | "graphics">("apps");
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Lightbox State
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [selectedProjectIndex, setSelectedProjectIndex] = useState(0);
+
+    useEffect(() => {
+        async function loadProjects() {
+            setLoading(true);
+            const result = await getProjectsAction();
+            if (result.success && result.data) {
+                setProjects(result.data as Project[]);
+            }
+            setLoading(false);
+        }
+        loadProjects();
+    }, []);
+
+    // Filter projects based on active tab
+    // We'll treat "Web App" & "Mobile App" as 'apps'
+    // Everything else as 'graphics'
+    const filteredProjects = projects.filter(p => {
+        if (activeTab === 'apps') {
+            return p.category === 'Web App' || p.category === 'Mobile App';
+        } else {
+            return p.category !== 'Web App' && p.category !== 'Mobile App';
+        }
+    });
+
+    const openLightbox = (index: number) => {
+        setSelectedProjectIndex(index);
+        setLightboxOpen(true);
+    };
+
+    const handleNext = () => {
+        setSelectedProjectIndex((prev) => (prev + 1) % filteredProjects.length);
+    };
+
+    const handlePrev = () => {
+        setSelectedProjectIndex((prev) => (prev - 1 + filteredProjects.length) % filteredProjects.length);
+    };
+
+    const currentProject = filteredProjects[selectedProjectIndex];
 
     return (
         <div className="w-full flex flex-col items-center gap-8">
 
-            {/* 1. Category Switcher - Minimal Style */}
+            {/* 1. Category Switcher */}
             {showFilter && (
-                <div className="flex gap-2 items-center justify-center mb-4">
-                    <span className="text-sm font-medium text-white/40 uppercase tracking-widest mr-4">Filter:</span>
-                    <TabButton
-                        isActive={activeTab === "apps"}
+                <div className="flex gap-2 items-center justify-center mb-4 flex-wrap">
+                    <span className="text-sm font-medium text-white/40 uppercase tracking-widest mr-2 md:mr-4">Filter:</span>
+                    <button
                         onClick={() => setActiveTab("apps")}
-                        label="Web Apps"
-                    />
-                    <TabButton
-                        isActive={activeTab === "graphics"}
+                        className={cn(
+                            "px-3 md:px-6 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                            activeTab === "apps"
+                                ? "bg-white text-black"
+                                : "bg-white/10 text-white hover:bg-white/20"
+                        )}
+                    >
+                        Web & Mobile
+                    </button>
+                    <button
                         onClick={() => setActiveTab("graphics")}
-                        label="Graphic Design"
-                    />
+                        className={cn(
+                            "px-3 md:px-6 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                            activeTab === "graphics"
+                                ? "bg-white text-black"
+                                : "bg-white/10 text-white hover:bg-white/20"
+                        )}
+                    >
+                        Graphic Design
+                    </button>
                 </div>
             )}
 
             {/* 2. Content Area */}
-            <div className="w-full relative min-h-auto md:min-h-[500px]">
-                <AnimatePresence mode="wait">
-                    {activeTab === "apps" ? (
+            <div className="w-full relative min-h-[500px]">
+                {loading ? (
+                    <div className="flex items-center justify-center h-40">
+                        <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full" />
+                    </div>
+                ) : filteredProjects.length === 0 ? (
+                    <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/5">
+                        <h3 className="text-gray-400">No projects found in this category.</h3>
+                    </div>
+                ) : (
+                    <AnimatePresence mode="wait">
                         <motion.div
-                            key="apps"
+                            key={activeTab}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.4 }}
+                            className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4"
                         >
-                            <TabletSlider />
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="graphics"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.4 }}
-                            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                        >
-                            {graphics.map((item) => (
-                                <GraphicCard key={item.id} item={item} />
+                            {filteredProjects.map((item, index) => (
+                                <div key={item.id} className="break-inside-avoid">
+                                    <GraphicCard
+                                        item={item}
+                                        onClick={() => openLightbox(index)}
+                                    />
+                                </div>
                             ))}
                         </motion.div>
-                    )}
-                </AnimatePresence>
+                    </AnimatePresence>
+                )}
             </div>
 
+            {/* Lightbox */}
+            {currentProject && (
+                <Lightbox
+                    isOpen={lightboxOpen}
+                    onClose={() => setLightboxOpen(false)}
+                    imageSrc={currentProject.image_url}
+                    images={currentProject.gallery}
+                    title={currentProject.title}
+                    category={currentProject.category}
+                    projectUrl={currentProject.project_url}
+                    onNextProject={handleNext}
+                    onPrevProject={handlePrev}
+                />
+            )}
         </div>
     );
 }
+
 
 // --- SUB-COMPONENTS ---
 
@@ -142,89 +181,35 @@ function TabButton({ isActive, onClick, label }: { isActive: boolean, onClick: (
     )
 }
 
-function TabletSlider() {
-    const [currentIndex, setCurrentIndex] = useState(0);
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % webApps.length);
-        }, 3000);
-        return () => clearInterval(timer);
-    }, []);
 
-    return (
-        <div className="w-full flex flex-col items-center justify-center">
-            {/* Tablet Frame */}
-            <div className="relative w-full max-w-4xl aspect-[16/10] bg-black rounded-[2rem] border-[8px] border-neutral-800 shadow-2xl overflow-hidden ring-1 ring-[var(--spatial-border)]">
-                <div className="relative w-full h-full bg-gray-900 overflow-hidden">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={currentIndex}
-                            initial={{ x: 100, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -100, opacity: 0 }}
-                            transition={{ duration: 0.6, ease: "easeInOut" }}
-                            className="absolute inset-0"
-                        >
-                            {/* Background Image */}
-                            <div
-                                className="absolute inset-0 bg-cover bg-center"
-                                style={{ backgroundImage: `url(${webApps[currentIndex].image})` }}
-                            >
-                                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
-                            </div>
-
-                            {/* Content Overlay */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-10">
-                                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium text-white mb-4 backdrop-blur-md">
-                                    {webApps[currentIndex].category}
-                                </span>
-                                <h3 className="text-3xl md:text-5xl font-bold text-white mb-4">
-                                    {webApps[currentIndex].title}
-                                </h3>
-                                <p className="text-gray-300 max-w-lg text-lg mb-8 line-clamp-2 md:line-clamp-none">
-                                    {webApps[currentIndex].description}
-                                </p>
-                                <PillButton variant="glass" className="hover:bg-white/20">
-                                    View Project <ArrowUpRight className="w-4 h-4 ml-2" />
-                                </PillButton>
-                            </div>
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-xl z-20" />
-            </div>
-            {/* Indicators */}
-            <div className="flex gap-3 mt-8">
-                {webApps.map((_, idx) => (
-                    <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex ? "w-8 bg-white" : "w-2 bg-white/20"}`} />
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function GraphicCard({ item }: { item: typeof graphics[0] }) {
+// Reusing GraphicCard for all items now for consistency in Masonry
+function GraphicCard({ item, onClick }: { item: Project, onClick: () => void }) {
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={cn(
-                "relative group overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm",
-                item.size === "large" ? "md:row-span-2 aspect-[3/4]" : "aspect-[4/3]"
-            )}
+            className="relative group overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm cursor-pointer"
+            onClick={onClick}
         >
-            <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                style={{ backgroundImage: `url(${item.image})` }}
+            <img
+                src={item.image_url}
+                alt={item.title}
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
             <div className="absolute bottom-0 left-0 w-full p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                 <span className="text-accent text-xs font-bold uppercase tracking-wider mb-2 block">{item.category}</span>
                 <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
             </div>
+
+            {/* Hover Icon */}
+            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 p-2 rounded-full backdrop-blur-md">
+                <ArrowUpRight className="w-4 h-4 text-white" />
+            </div>
         </motion.div>
     )
 }
+
