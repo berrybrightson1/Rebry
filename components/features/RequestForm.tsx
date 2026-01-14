@@ -37,13 +37,29 @@ export function RequestForm() {
 
     const onSubmit = async (data: FormData) => {
         setIsSubmitting(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        console.log("Form Data:", data);
-        setIsSubmitting(false);
-        setIsSuccess(true);
-        reset();
-        setTimeout(() => setIsSuccess(false), 5000); // Reset success after 5s
+        try {
+            const response = await fetch("/api/request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to submit request");
+            }
+
+            console.log("Form Data Submitted:", data);
+            setIsSuccess(true);
+            reset();
+            setTimeout(() => setIsSuccess(false), 5000); // Reset success after 5s
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            // Optionally set an error state here to show to the user
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
