@@ -8,13 +8,11 @@ import { cn } from "@/lib/utils";
 const links = [
     { name: "Home", href: "/" },
     { name: "Projects", href: "/projects" },
-    { name: "Services", href: "/request" },
+    { name: "Services", href: "/services" },
 ];
 
 export function Navbar() {
     const pathname = usePathname();
-
-    if (pathname.startsWith("/admin")) return null;
 
     return (
         <motion.nav

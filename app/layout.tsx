@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
-import { Sora } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
 import { GlobalSpotlight } from "@/components/ui/GlobalSpotlight";
 
-const sora = Sora({
-  subsets: ["latin"],
-  variable: "--font-sora",
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
-
 export const metadata: Metadata = {
-  title: "RebryCreatives | Spatial Portfolio",
-  description: "Personal Portfolio & Agency Portal - White Spatial UI",
+  metadataBase: new URL("https://rebrycreatives.com"),
+  title: {
+    default: "Rebry Creatives | Websites, Apps, Graphics & Digital Content",
+    template: "%s | Rebry Creatives",
+  },
+  description: "Rebry Creatives builds websites, web apps, mobile experiences, graphic design assets, 3D product visuals, and content systems for growing brands.",
+  openGraph: {
+    title: "Rebry Creatives",
+    description: "Websites, apps, graphics, 3D product visuals, and content systems for growing brands.",
+    url: "/",
+    siteName: "Rebry Creatives",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -23,9 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body
-        className={`${sora.variable} font-sans antialiased min-h-screen selection:bg-accent/30 selection:text-white pb-20`}
+        className={`${GeistSans.className} font-sans antialiased min-h-screen selection:bg-accent/30 selection:text-white pb-20`}
       >
         <GlobalSpotlight />
         <div className="aurora-bg">

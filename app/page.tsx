@@ -4,7 +4,18 @@ import { HomeSlider } from "@/components/features/HomeSlider";
 import { HeroSection } from "@/components/features/HeroSection";
 import { PremiumCTA } from "@/components/features/PremiumCTA";
 import { Mail, Phone, Github } from "lucide-react";
-import Link from "next/link";
+import Image from "next/image";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Websites, Apps, Graphics & Creative Digital Services",
+  description: "Rebry Creatives builds websites, web apps, ecommerce experiences, mobile interfaces, graphic design assets, 3D product visuals, and content systems.",
+  openGraph: {
+    title: "Rebry Creatives",
+    description: "Websites, apps, graphics, 3D product visuals, and content systems for growing brands.",
+    url: "/",
+  },
+};
 
 export default function Home() {
   return (
@@ -15,9 +26,11 @@ export default function Home() {
           <GlassCard className="text-center flex flex-col items-center sticky top-28">
             <div className="relative w-32 h-32 rounded-full p-1 bg-gradient-to-br from-blue-500 to-purple-600 mb-4 shadow-[0_0_40px_rgba(59,130,246,0.3)] mx-auto">
               <div className="w-full h-full rounded-full overflow-hidden border-4 border-black/50 bg-gray-800">
-                <img
+                <Image
                   src="/berry_brightson.jpeg"
                   alt="Berry"
+                  width={128}
+                  height={128}
                   className="w-full h-full object-cover"
                 />
               </div>

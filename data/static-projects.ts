@@ -1,0 +1,223 @@
+export interface StaticProject {
+    id: string;
+    title: string;
+    category: string;
+    image: string;
+    url: string;
+}
+
+export const featuredProjects: StaticProject[] = [
+    {
+        id: "hgh-workforce",
+        title: "HGH Workforce",
+        category: "Payroll Platform",
+        image: "/projects/optimized/hghworkforce.vercel.app_.webp",
+        url: "https://hghworkforce.vercel.app",
+    },
+    {
+        id: "hobort-auto-parts",
+        title: "Hobort Auto Parts Express",
+        category: "E-Commerce",
+        image: "/projects/optimized/hobortautopartsexpress.com_.webp",
+        url: "https://www.hobortautopartsexpress.com",
+    },
+    {
+        id: "prog-space",
+        title: "Prog Space",
+        category: "Learning Platform",
+        image: "/projects/optimized/prog-space.vercel.app_.webp",
+        url: "https://prog-space.vercel.app",
+    },
+    {
+        id: "top-arena",
+        title: "Top Arena",
+        category: "Sports Platform",
+        image: "/projects/optimized/top-arena.vercel.app_.webp",
+        url: "https://top-arena.vercel.app",
+    },
+];
+
+export const graphicDesignProjects: StaticProject[] = [
+    {
+        id: "fasttrack-3",
+        title: "Fast Track Shipping Campaign",
+        category: "Graphic Design",
+        image: "/graphics/optimized/fasttrack3-design.webp",
+        url: "/graphics/optimized/fasttrack3-design.webp",
+    },
+    {
+        id: "fasttrack-4",
+        title: "Fast Track Delivery Promo",
+        category: "Graphic Design",
+        image: "/graphics/optimized/fasttrack4-design.webp",
+        url: "/graphics/optimized/fasttrack4-design.webp",
+    },
+    {
+        id: "fasttrack-shipping-alt",
+        title: "Fast Track Shipping Promo",
+        category: "Graphic Design",
+        image: "/graphics/optimized/fasttrackshipping--design.webp",
+        url: "/graphics/optimized/fasttrackshipping--design.webp",
+    },
+    {
+        id: "fasttrack-shipping",
+        title: "Fast Track Logistics Visual",
+        category: "Graphic Design",
+        image: "/graphics/optimized/fasttrackshipping-design.webp",
+        url: "/graphics/optimized/fasttrackshipping-design.webp",
+    },
+    {
+        id: "food",
+        title: "Food Promo Creative",
+        category: "Graphic Design",
+        image: "/graphics/optimized/food-design.webp",
+        url: "/graphics/optimized/food-design.webp",
+    },
+    {
+        id: "foood",
+        title: "Food Brand Creative",
+        category: "Graphic Design",
+        image: "/graphics/optimized/foood-design.webp",
+        url: "/graphics/optimized/foood-design.webp",
+    },
+    {
+        id: "levitate-alt",
+        title: "Levitate Event Visual",
+        category: "Graphic Design",
+        image: "/graphics/optimized/levitate-design-2.webp",
+        url: "/graphics/optimized/levitate-design-2.webp",
+    },
+    {
+        id: "levitate",
+        title: "Levitate Brand Poster",
+        category: "Graphic Design",
+        image: "/graphics/optimized/levitate-design.webp",
+        url: "/graphics/optimized/levitate-design.webp",
+    },
+    {
+        id: "making-moves",
+        title: "Making Moves Campaign",
+        category: "Graphic Design",
+        image: "/graphics/optimized/making-moves-design.webp",
+        url: "/graphics/optimized/making-moves-design.webp",
+    },
+    {
+        id: "making-moves-3",
+        title: "Making Moves Social Creative",
+        category: "Graphic Design",
+        image: "/graphics/optimized/makingmoves3-design.webp",
+        url: "/graphics/optimized/makingmoves3-design.webp",
+    },
+    {
+        id: "making-moves-4",
+        title: "Making Moves Promo Visual",
+        category: "Graphic Design",
+        image: "/graphics/optimized/makingmoves4-design.webp",
+        url: "/graphics/optimized/makingmoves4-design.webp",
+    },
+    {
+        id: "making-moves-5",
+        title: "Making Moves Wide Banner",
+        category: "Graphic Design",
+        image: "/graphics/optimized/makingmoves5-design.webp",
+        url: "/graphics/optimized/makingmoves5-design.webp",
+    },
+    {
+        id: "mkingsonmc",
+        title: "Mkingson MC Brand Visual",
+        category: "Graphic Design",
+        image: "/graphics/optimized/mkingsonmc-design.webp",
+        url: "/graphics/optimized/mkingsonmc-design.webp",
+    },
+    {
+        id: "moelre",
+        title: "Moelre Product Creative",
+        category: "Graphic Design",
+        image: "/graphics/optimized/moelre-design.webp",
+        url: "/graphics/optimized/moelre-design.webp",
+    },
+    {
+        id: "naiyuan-mart-3",
+        title: "Naiyuan Mart Campaign",
+        category: "Graphic Design",
+        image: "/graphics/optimized/naiyuanmart3-design.webp",
+        url: "/graphics/optimized/naiyuanmart3-design.webp",
+    },
+    {
+        id: "naiyuan-mart",
+        title: "Naiyuan Mart Product Visual",
+        category: "Graphic Design",
+        image: "/graphics/optimized/naiyuanmart-design.webp",
+        url: "/graphics/optimized/naiyuanmart-design.webp",
+    },
+    {
+        id: "naiyuan-mart-1",
+        title: "Naiyuan Mart Promo Design",
+        category: "Graphic Design",
+        image: "/graphics/optimized/naiyuanmart-design1.webp",
+        url: "/graphics/optimized/naiyuanmart-design1.webp",
+    },
+    {
+        id: "paid-app",
+        title: "Paid App Launch Creative",
+        category: "Graphic Design",
+        image: "/graphics/optimized/paidapp-design.webp",
+        url: "/graphics/optimized/paidapp-design.webp",
+    },
+    {
+        id: "rush-product",
+        title: "Rush Product Campaign",
+        category: "Graphic Design",
+        image: "/graphics/optimized/rush-product-design.webp",
+        url: "/graphics/optimized/rush-product-design.webp",
+    },
+    {
+        id: "senseli-1",
+        title: "Senseli Product Visual",
+        category: "Graphic Design",
+        image: "/graphics/optimized/senseli1-design.webp",
+        url: "/graphics/optimized/senseli1-design.webp",
+    },
+    {
+        id: "senseli",
+        title: "Senseli Brand Creative",
+        category: "Graphic Design",
+        image: "/graphics/optimized/senseli-design.webp",
+        url: "/graphics/optimized/senseli-design.webp",
+    },
+    {
+        id: "vesslr-1",
+        title: "Vesslr Product Poster",
+        category: "Graphic Design",
+        image: "/graphics/optimized/vesslr1-design.webp",
+        url: "/graphics/optimized/vesslr1-design.webp",
+    },
+    {
+        id: "vesslr-2",
+        title: "Vesslr Social Creative",
+        category: "Graphic Design",
+        image: "/graphics/optimized/vesslr2-design.webp",
+        url: "/graphics/optimized/vesslr2-design.webp",
+    },
+    {
+        id: "vesslr",
+        title: "Vesslr Campaign Visual",
+        category: "Graphic Design",
+        image: "/graphics/optimized/vesslr-design.webp",
+        url: "/graphics/optimized/vesslr-design.webp",
+    },
+    {
+        id: "woody-motors-1",
+        title: "Woody Motors Campaign",
+        category: "Graphic Design",
+        image: "/graphics/optimized/woodymotors1-design.webp",
+        url: "/graphics/optimized/woodymotors1-design.webp",
+    },
+    {
+        id: "woody-motors-3",
+        title: "Woody Motors Promo Visual",
+        category: "Graphic Design",
+        image: "/graphics/optimized/woodymotors3-design.webp",
+        url: "/graphics/optimized/woodymotors3-design.webp",
+    },
+];

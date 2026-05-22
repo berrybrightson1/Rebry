@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useSpring, useMotionValue } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
 
 export function GlobalSpotlight() {
     const mouseX = useMotionValue(0);
@@ -40,5 +40,3 @@ export function GlobalSpotlight() {
     );
 }
 
-// Helper for template literal with motion values
-import { useMotionTemplate } from "framer-motion";

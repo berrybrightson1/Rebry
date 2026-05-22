@@ -1,83 +1,44 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { PillButton } from "../ui/PillButton";
+import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { featuredProjects, graphicDesignProjects, type StaticProject } from "@/data/static-projects";
+import { PortfolioLightbox } from "@/components/features/PortfolioLightbox";
 
-// --- DATA ---
-import { Lightbox } from "../ui/Lightbox";
-import { getProjectsAction } from "@/app/actions/projects";
+export type ProjectGalleryTab = "apps" | "graphics";
 
-interface Project {
-    id: string;
-    title: string;
-    category: string;
-    image_url: string;
-    width: number;
-    height: number;
-    description?: string;
-    gallery?: string[];
-    project_url?: string;
-}
+const graphicBentoClasses = [
+    "col-span-2 row-span-2",
+    "col-span-1 row-span-1",
+    "col-span-1 row-span-1",
+    "col-span-1 row-span-2",
+    "col-span-1 row-span-1",
+    "col-span-2 row-span-1",
+    "col-span-1 row-span-1",
+    "col-span-1 row-span-2",
+];
 
-// Fallback data (optional, can be empty)
-const webApps: Project[] = [];
-const graphics: Project[] = [];
-
-
-export function ProjectGallery({ showFilter = true }: { showFilter?: boolean }) {
-    const [activeTab, setActiveTab] = useState<"apps" | "graphics">("apps");
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    // Lightbox State
+export function ProjectGallery({
+    showFilter = true,
+    activeTab: controlledActiveTab,
+    onTabChange,
+}: {
+    showFilter?: boolean;
+    activeTab?: ProjectGalleryTab;
+    onTabChange?: (tab: ProjectGalleryTab) => void;
+}) {
+    const [internalActiveTab, setInternalActiveTab] = useState<ProjectGalleryTab>("apps");
+    const [selectedGraphicIndex, setSelectedGraphicIndex] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
-    const [selectedProjectIndex, setSelectedProjectIndex] = useState(0);
-
-    useEffect(() => {
-        async function loadProjects() {
-            setLoading(true);
-            const result = await getProjectsAction();
-            if (result.success && result.data) {
-                setProjects(result.data as Project[]);
-            }
-            setLoading(false);
-        }
-        loadProjects();
-    }, []);
-
-    // Filter projects based on active tab
-    // We'll treat "Web App" & "Mobile App" as 'apps'
-    // Everything else as 'graphics'
-    const filteredProjects = projects.filter(p => {
-        if (activeTab === 'apps') {
-            return p.category === 'Web App' || p.category === 'Mobile App';
-        } else {
-            return p.category !== 'Web App' && p.category !== 'Mobile App';
-        }
-    });
-
-    const openLightbox = (index: number) => {
-        setSelectedProjectIndex(index);
-        setLightboxOpen(true);
-    };
-
-    const handleNext = () => {
-        setSelectedProjectIndex((prev) => (prev + 1) % filteredProjects.length);
-    };
-
-    const handlePrev = () => {
-        setSelectedProjectIndex((prev) => (prev - 1 + filteredProjects.length) % filteredProjects.length);
-    };
-
-    const currentProject = filteredProjects[selectedProjectIndex];
+    const activeTab = controlledActiveTab ?? internalActiveTab;
+    const setActiveTab = onTabChange ?? setInternalActiveTab;
+    const filteredProjects = activeTab === "apps" ? featuredProjects : graphicDesignProjects;
 
     return (
         <div className="w-full flex flex-col items-center gap-8">
-
-            {/* 1. Category Switcher */}
             {showFilter && (
                 <div className="flex gap-2 items-center justify-center mb-4 flex-wrap">
                     <span className="text-sm font-medium text-white/40 uppercase tracking-widest mr-2 md:mr-4">Filter:</span>
@@ -106,13 +67,8 @@ export function ProjectGallery({ showFilter = true }: { showFilter?: boolean }) 
                 </div>
             )}
 
-            {/* 2. Content Area */}
             <div className="w-full relative min-h-[500px]">
-                {loading ? (
-                    <div className="flex items-center justify-center h-40">
-                        <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full" />
-                    </div>
-                ) : filteredProjects.length === 0 ? (
+                {filteredProjects.length === 0 ? (
                     <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/5">
                         <h3 className="text-gray-400">No projects found in this category.</h3>
                     </div>
@@ -124,92 +80,125 @@ export function ProjectGallery({ showFilter = true }: { showFilter?: boolean }) 
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.4 }}
-                            className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4"
+                            className={cn(
+                                activeTab === "apps"
+                                    ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+                                    : "grid grid-flow-dense auto-rows-[150px] grid-cols-2 gap-3 sm:block sm:columns-2 sm:gap-4 sm:space-y-4 lg:columns-3"
+                            )}
                         >
                             {filteredProjects.map((item, index) => (
-                                <div key={item.id} className="break-inside-avoid">
-                                    <GraphicCard
-                                        item={item}
-                                        onClick={() => openLightbox(index)}
-                                    />
-                                </div>
+                                <ProjectCard
+                                    key={item.id}
+                                    item={item}
+                                    variant={activeTab}
+                                    bentoClass={activeTab === "graphics" ? graphicBentoClasses[index % graphicBentoClasses.length] : undefined}
+                                    onGraphicClick={() => {
+                                        setSelectedGraphicIndex(index);
+                                        setLightboxOpen(true);
+                                    }}
+                                />
                             ))}
                         </motion.div>
                     </AnimatePresence>
                 )}
             </div>
 
-            {/* Lightbox */}
-            {currentProject && (
-                <Lightbox
-                    isOpen={lightboxOpen}
-                    onClose={() => setLightboxOpen(false)}
-                    imageSrc={currentProject.image_url}
-                    images={currentProject.gallery}
-                    title={currentProject.title}
-                    category={currentProject.category}
-                    projectUrl={currentProject.project_url}
-                    onNextProject={handleNext}
-                    onPrevProject={handlePrev}
-                />
-            )}
+            <PortfolioLightbox
+                items={graphicDesignProjects}
+                currentIndex={selectedGraphicIndex}
+                isOpen={lightboxOpen}
+                onClose={() => setLightboxOpen(false)}
+                onSelect={setSelectedGraphicIndex}
+            />
         </div>
     );
 }
 
+function ProjectCard({
+    item,
+    variant,
+    bentoClass,
+    onGraphicClick,
+}: {
+    item: StaticProject;
+    variant: "apps" | "graphics";
+    bentoClass?: string;
+    onGraphicClick: () => void;
+}) {
+    if (variant === "graphics") {
+        return (
+            <motion.button
+                type="button"
+                onClick={onGraphicClick}
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.35 }}
+                className={cn(
+                    "relative group block h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 text-left backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 sm:mb-4 sm:h-auto sm:break-inside-avoid",
+                    bentoClass
+                )}
+                aria-label={`Preview ${item.title}`}
+            >
+                <div className="h-full overflow-hidden bg-black sm:h-auto">
+                    <Image
+                        src={item.image}
+                        alt={`${item.title} artwork`}
+                        width={1600}
+                        height={1000}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 sm:h-auto sm:object-contain"
+                    />
+                </div>
 
-// --- SUB-COMPONENTS ---
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-80 transition-opacity group-hover:opacity-95" />
+                <div className="absolute bottom-0 left-0 flex w-full items-end justify-between gap-2 p-3 sm:gap-4 sm:p-5">
+                    <div className="min-w-0">
+                        <span className="block text-[10px] font-semibold uppercase tracking-wider text-blue-200 sm:text-xs sm:font-bold">{item.category}</span>
+                        <h3 className="line-clamp-2 text-xs font-semibold leading-tight text-white sm:text-xl sm:font-bold">{item.title}</h3>
+                    </div>
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-black transition-transform group-hover:scale-105 sm:h-10 sm:w-10">
+                        <ArrowUpRight className="w-3.5 h-3.5 sm:h-4 sm:w-4" />
+                    </span>
+                </div>
+            </motion.button>
+        );
+    }
 
-function TabButton({ isActive, onClick, label }: { isActive: boolean, onClick: () => void, label: string }) {
     return (
-        <button
-            onClick={onClick}
-            className={cn(
-                "relative px-6 py-2 rounded-full text-sm font-semibold transition-colors z-10",
-                isActive ? "text-black" : "text-white/60 hover:text-white"
-            )}
-        >
-            {isActive && (
-                <motion.div
-                    layoutId="active-gallery-tab"
-                    className="absolute inset-0 bg-white rounded-full -z-10 shadow-lg"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-            )}
-            {label}
-        </button>
-    )
-}
-
-
-
-// Reusing GraphicCard for all items now for consistency in Masonry
-function GraphicCard({ item, onClick }: { item: Project, onClick: () => void }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+        <motion.a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative group overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm cursor-pointer"
-            onClick={onClick}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.35 }}
+            className="relative group mb-4 block break-inside-avoid overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+            aria-label={`Open ${item.title}`}
         >
-            <img
-                src={item.image_url}
-                alt={item.title}
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-
-            <div className="absolute bottom-0 left-0 w-full p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                <span className="text-accent text-xs font-bold uppercase tracking-wider mb-2 block">{item.category}</span>
-                <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
+            <div className={cn("overflow-hidden bg-black", variant === "apps" && "aspect-[16/10]")}>
+                <Image
+                    src={item.image}
+                    alt={`${item.title} website screenshot`}
+                    width={1600}
+                    height={1000}
+                    className={cn(
+                        "w-full transition-transform duration-700 group-hover:scale-105",
+                        variant === "apps" ? "h-full object-cover" : "h-auto object-contain"
+                    )}
+                />
             </div>
 
-            {/* Hover Icon */}
-            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 p-2 rounded-full backdrop-blur-md">
-                <ArrowUpRight className="w-4 h-4 text-white" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-80 transition-opacity group-hover:opacity-95" />
+            <div className="absolute bottom-0 left-0 flex w-full items-end justify-between gap-4 p-5">
+                <div className="min-w-0">
+                    <span className="block text-xs font-bold uppercase tracking-wider text-blue-200">{item.category}</span>
+                    <h3 className="truncate text-xl font-bold text-white">{item.title}</h3>
+                </div>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-black transition-transform group-hover:scale-105">
+                    <ArrowUpRight className="w-4 h-4" />
+                </span>
             </div>
-        </motion.div>
-    )
+        </motion.a>
+    );
 }
-

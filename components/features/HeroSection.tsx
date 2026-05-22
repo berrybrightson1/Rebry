@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Code2, Palette, Cpu, Layers } from "lucide-react";
+import { ArrowRight, Code2, Palette, Cpu, Layers, type LucideIcon } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { PillButton } from "@/components/ui/PillButton";
 
@@ -105,7 +105,7 @@ export function HeroSection() {
     );
 }
 
-function FloatingIcon({ icon: Icon, delay, x, y, color }: { icon: any, delay: number, x: number, y: number, color: string }) {
+function FloatingIcon({ icon: Icon, delay, x, y, color }: { icon: LucideIcon, delay: number, x: number, y: number, color: string }) {
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0 }}

@@ -5,18 +5,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { PillButton } from "@/components/ui/PillButton";
 import { Input } from "@/components/ui/Input";
-import { AlertModal } from "@/components/ui/AlertModal";
 import { ArrowRight, Check, Loader2, Send } from "lucide-react";
-import { submitProjectRequest } from "@/app/actions/submit-project";
 
-type ProjectType = "web-app" | "website" | "mobile-app" | "graphics" | "other";
+type ProjectType = "website" | "web-app" | "mobile-app" | "graphics" | "3d-modeling" | "content-creation" | "other";
 type BudgetRange = "less-1k" | "1k-5k" | "5k-10k" | "10k+";
 
 const projectTypes = [
-    { id: "web-app", label: "Web Application" },
-    { id: "website", label: "Marketing Website" },
+    { id: "website", label: "Website Development" },
+    { id: "web-app", label: "Web App / Portal" },
     { id: "mobile-app", label: "Mobile App" },
     { id: "graphics", label: "Graphic Design" },
+    { id: "3d-modeling", label: "3D Product Modeling" },
+    { id: "content-creation", label: "Content Creation" },
     { id: "other", label: "Other" },
 ];
 
@@ -34,8 +34,6 @@ export function ProjectRequestForm() {
     const [direction, setDirection] = useState(0);
 
 
-    const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: "", message: "", type: "error" as "error" | "success" | "info" | "warning" });
-
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -45,6 +43,22 @@ export function ProjectRequestForm() {
         timeline: "",
         description: "",
     });
+
+    const selectedProjectType = projectTypes.find((type) => type.id === formData.projectType)?.label || formData.projectType || "Not selected";
+    const selectedBudget = budgetRanges.find((range) => range.id === formData.budget)?.label || formData.budget || "Not selected";
+    const whatsappMessage = [
+        "Hello Rebry Creatives, I want to start a project.",
+        "",
+        `Name: ${formData.name || "Not provided"}`,
+        `Email: ${formData.email || "Not provided"}`,
+        `Client WhatsApp: ${formData.whatsapp || "Not provided"}`,
+        `Service Needed: ${selectedProjectType}`,
+        `Budget Range: ${selectedBudget}`,
+        `Timeline: ${formData.timeline || "Not provided"}`,
+        "",
+        "Project Details:",
+        formData.description || "Not provided",
+    ].join("\n");
 
     const handleChange = (field: string, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -68,21 +82,12 @@ export function ProjectRequestForm() {
         e.preventDefault();
         setIsSubmitting(true);
 
-        try {
-            await submitProjectRequest(formData);
-            await new Promise((resolve) => setTimeout(resolve, 800)); // Small delay for effect
-            setIsSubmitted(true);
-        } catch (error) {
-            console.error("Submission failed");
-            setAlertConfig({
-                isOpen: true,
-                title: "Submission Failed",
-                message: "Please try again later.",
-                type: "error"
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
+        const message = encodeURIComponent(whatsappMessage);
+
+        window.open(`https://wa.me/233551171353?text=${message}`, "_blank", "noopener,noreferrer");
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        setIsSubmitted(true);
+        setIsSubmitting(false);
     };
 
     const slideVariants = {
@@ -137,7 +142,7 @@ export function ProjectRequestForm() {
                         transition={{ delay: 0.3 }}
                         className="text-gray-300 mb-10 max-w-lg mx-auto text-lg"
                     >
-                        Thanks for reaching out, {formData.name}. We're already analyzing your vision and will get back to you shortly.
+                        Thanks for reaching out, {formData.name}. WhatsApp opened with your structured request.
                     </motion.p>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -156,13 +161,6 @@ export function ProjectRequestForm() {
 
     return (
         <GlassCard className="max-w-3xl mx-auto p-0 border-accent/10">
-            <AlertModal
-                isOpen={alertConfig.isOpen}
-                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
-                title={alertConfig.title}
-                message={alertConfig.message}
-                type={alertConfig.type}
-            />
             <div className="bg-black/40 backdrop-blur-xl p-8 md:p-12 rounded-[1.3rem] overflow-hidden relative min-h-[600px] flex flex-col">
 
                 {/* Premium Progress Bar */}
@@ -236,7 +234,7 @@ export function ProjectRequestForm() {
                             {step === 1 && (
                                 <div className="space-y-8">
                                     <div className="text-center md:text-left">
-                                        <h3 className="text-3xl font-bold text-white mb-2">Let's start with the basics</h3>
+                                        <h3 className="text-3xl font-bold text-white mb-2">Let&apos;s start with the basics</h3>
                                         <p className="text-gray-400">We need a few details to get the conversation started.</p>
                                     </div>
 
@@ -279,12 +277,12 @@ export function ProjectRequestForm() {
                                 <div className="space-y-8">
                                     <div className="text-center md:text-left">
                                         <h3 className="text-3xl font-bold text-white mb-2">Project Scope</h3>
-                                        <p className="text-gray-400">Help us understand the scale and requirements.</p>
+                                        <p className="text-gray-400">Choose the service and expected investment range.</p>
                                     </div>
 
                                     <div className="space-y-4">
                                         <label className="text-sm font-medium text-gray-400">What are we building?</label>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                                             {projectTypes.map((type) => (
                                                 <motion.button
                                                     whileHover={{ scale: 1.02 }}
@@ -359,13 +357,25 @@ export function ProjectRequestForm() {
                                             className="bg-white/5 border-white/10 focus:border-purple-500/50 focus:bg-purple-500/5 transition-all h-12"
                                         />
                                     </div>
+
+                                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                                        <div className="mb-3 flex items-center justify-between gap-3">
+                                            <h4 className="text-sm font-semibold text-white">WhatsApp message preview</h4>
+                                            <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-200">
+                                                Opens WhatsApp
+                                            </span>
+                                        </div>
+                                        <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                                            {whatsappMessage}
+                                        </pre>
+                                    </div>
                                 </div>
                             )}
                         </motion.div>
                     </AnimatePresence>
 
                     {/* Navigation Buttons */}
-                    <div className="pt-10 flex justify-between items-center mt-auto">
+                    <div className="pt-10 flex flex-col-reverse gap-4 sm:flex-row sm:justify-between sm:items-center mt-auto">
                         {step > 1 ? (
                             <button
                                 type="button"
@@ -381,7 +391,7 @@ export function ProjectRequestForm() {
                                 type="button"
                                 onClick={handleNext}
                                 disabled={(step === 1 && (!formData.name || !formData.email)) || (step === 2 && (!formData.projectType || !formData.budget))}
-                                className="bg-white text-black hover:bg-gray-200 border-none px-8 h-12"
+                                className="w-full sm:w-auto bg-white text-black hover:bg-gray-200 border-none px-8 h-12"
                             >
                                 Next Step <ArrowRight className="w-4 h-4 ml-2" />
                             </PillButton>
@@ -390,7 +400,7 @@ export function ProjectRequestForm() {
                                 type="submit"
                                 size="lg"
                                 disabled={isSubmitting || !formData.description}
-                                className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 border-none shadow-[0_0_30px_rgba(79,70,229,0.4)] hover:shadow-[0_0_50px_rgba(79,70,229,0.6)] px-10 h-14 text-lg"
+                                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 border-none shadow-[0_0_30px_rgba(79,70,229,0.4)] hover:shadow-[0_0_50px_rgba(79,70,229,0.6)] px-10 h-14 text-lg"
                             >
                                 {isSubmitting ? (
                                     <>
@@ -398,7 +408,7 @@ export function ProjectRequestForm() {
                                     </>
                                 ) : (
                                     <>
-                                        Submit Request <Send className="w-5 h-5 ml-3" />
+                                        Open WhatsApp <Send className="w-5 h-5 ml-3" />
                                     </>
                                 )}
                             </PillButton>

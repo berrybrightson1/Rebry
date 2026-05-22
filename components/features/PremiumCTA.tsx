@@ -21,7 +21,7 @@ export function PremiumCTA() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
-                            className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight"
+                            className="text-2xl md:text-4xl font-bold text-white mb-4 tracking-tight"
                         >
                             Ready to <span className="text-blue-200">scale up?</span>
                         </motion.h2>
@@ -32,7 +32,7 @@ export function PremiumCTA() {
                             transition={{ duration: 0.5, delay: 0.1 }}
                             className="text-base md:text-lg text-gray-400 leading-relaxed font-light"
                         >
-                            Stop guessing. Start building. Let's create the digital solution your business strictly deserves.
+                            Stop guessing. Start building. Let&apos;s create the digital solution your business strictly deserves.
                         </motion.p>
                     </div>
 
